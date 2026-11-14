@@ -37,6 +37,8 @@ function computeAccess(task, userId, sharePermission) {
       canEdit: isOwner || isEditor,
       canChangeStatus: isOwner || isEditor || isAssignee,
       canDelete: isOwner,
+      // giao việc + quản lý chia sẻ: chỉ người tạo
+      canManage: isOwner,
     },
   };
 }
@@ -150,6 +152,8 @@ async function deleteTaskCascade(task) {
 
 module.exports = {
   USER_FIELDS,
+  idOf,
+  escapeRegex,
   computeAccess,
   serializeTask,
   populateTask,

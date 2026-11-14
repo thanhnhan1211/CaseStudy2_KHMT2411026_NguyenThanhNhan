@@ -63,7 +63,12 @@ router.post('/', async (req, res) => {
     res.status(201).json({
       task: serializeTask(task, {
         myRole: 'owner',
-        permissions: { canEdit: true, canChangeStatus: true, canDelete: true },
+        permissions: {
+          canEdit: true,
+          canChangeStatus: true,
+          canDelete: true,
+          canManage: true,
+        },
       }),
     });
   } catch (error) {

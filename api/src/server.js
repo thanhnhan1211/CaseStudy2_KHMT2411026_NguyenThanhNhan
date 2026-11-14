@@ -14,9 +14,16 @@ const app = express();
 app.use(express.json());
 
 const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
 const taskRoutes = require('./routes/task.routes');
+const assignmentRoutes = require('./routes/assignment.routes');
+const taskShareRoutes = require('./routes/taskShare.routes');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+// Các route con của công việc phải đặt trước /api/tasks
+app.use('/api/tasks/:id/assignees', assignmentRoutes);
+app.use('/api/tasks/:id/shares', taskShareRoutes);
 app.use('/api/tasks', taskRoutes);
 
 mongoose
