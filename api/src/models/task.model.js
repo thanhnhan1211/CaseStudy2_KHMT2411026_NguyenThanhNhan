@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
+const STATUSES = ['todo', 'in_progress', 'completed'];
+const PRIORITIES = ['low', 'medium', 'high'];
+
 const taskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
       required: true,
+      trim: true,
     },
 
     description: {
@@ -12,25 +16,34 @@ const taskSchema = new mongoose.Schema(
       default: '',
     },
 
-    category: {
-      type: String,
-      default: 'Other',
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
     },
+
+    // Nhóm C (giao việc) sẽ dùng 2 trường này
+    assigneeIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    primaryAssigneeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+
+    startDate: { type: Date, default: null },
+    dueDate: { type: Date, default: null },
 
     priority: {
       type: String,
-      enum: ['Low', 'Medium', 'High'],
-      default: 'Medium',
+      enum: PRIORITIES,
+      default: 'medium',
     },
 
     status: {
       type: String,
-      enum: ['Pending', 'InProgress', 'Completed'],
-      default: 'Pending',
-    },
-
-    dueDate: {
-      type: Date,
+      enum: STATUSES,
+      default: 'todo',
     },
   },
   {
@@ -38,4 +51,8 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
+taskSchema.index({ assigneeIds: 1 });
+
 module.exports = mongoose.model('Task', taskSchema);
+module.exports.STATUSES = STATUSES;
+module.exports.PRIORITIES = PRIORITIES;
