@@ -1,3 +1,4 @@
+import '../models/assignee.dart';
 import '../models/task.dart';
 import 'api_client.dart';
 
@@ -51,4 +52,36 @@ class TaskService {
   Future<void> deleteTask(String id) async {
     await _api.delete('/tasks/$id');
   }
+
+  // ---------- Giao việc ----------
+  List<Assignee> _parseAssignees(Map<String, dynamic> data) {
+    final list = (data['assignees'] as List?) ?? [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(Assignee.fromJson)
+        .toList();
+  }
+
+  Future<List<Assignee>> getAssignees(String taskId) async =>
+      _parseAssignees(await _api.get('/tasks/$taskId/assignees'));
+
+  Future<List<Assignee>> assign(String taskId, List<String> userIds) async =>
+      _parseAssignees(
+        await _api.post('/tasks/$taskId/assignees', body: {'userIds': userIds}),
+      );
+
+  Future<List<Assignee>> setPrimary(
+    String taskId,
+    String userId,
+    bool isPrimary,
+  ) async =>
+      _parseAssignees(
+        await _api.patch(
+          '/tasks/$taskId/assignees/$userId',
+          body: {'isPrimary': isPrimary},
+        ),
+      );
+
+  Future<List<Assignee>> removeAssignee(String taskId, String userId) async =>
+      _parseAssignees(await _api.delete('/tasks/$taskId/assignees/$userId'));
 }

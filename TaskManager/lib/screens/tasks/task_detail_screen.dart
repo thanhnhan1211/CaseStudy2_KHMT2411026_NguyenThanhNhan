@@ -8,6 +8,8 @@ import '../../utils/session.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/priority_badge.dart';
 import '../../widgets/status_badge.dart';
+import '../assignment/assign_task_screen.dart';
+import '../sharing/task_sharing_screen.dart';
 import 'task_edit_screen.dart';
 
 class TaskDetailScreen extends StatefulWidget {
@@ -88,6 +90,29 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       _changed = true;
       await _load();
     }
+  }
+
+  Future<void> _openAssign() async {
+    final task = _task;
+    if (task == null) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => AssignTaskScreen(task: task)),
+    );
+    if (changed == true) {
+      _changed = true;
+      await _load();
+    }
+  }
+
+  Future<void> _openSharing() async {
+    final task = _task;
+    if (task == null) return;
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => TaskSharingScreen(task: task)),
+    );
+    // Chia sẻ có thể làm đổi quyền của chính mình, nên luôn tải lại
+    _changed = true;
+    await _load();
   }
 
   Future<void> _delete() async {
@@ -213,6 +238,29 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         ),
         if (task.myRole != null)
           _infoRow(Icons.badge_outlined, 'Vai trò của bạn', Task.roleLabels[task.myRole] ?? ''),
+        const SizedBox(height: 20),
+        _section('Giao việc và chia sẻ'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (task.permissions.canManage)
+              OutlinedButton.icon(
+                onPressed: _openAssign,
+                icon: const Icon(Icons.person_add_alt),
+                label: const Text('Giao việc'),
+              ),
+            OutlinedButton.icon(
+              onPressed: _openSharing,
+              icon: const Icon(Icons.share_outlined),
+              label: Text(
+                task.permissions.canManage
+                    ? 'Quản lý chia sẻ'
+                    : 'Người được chia sẻ',
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 20),
         _section('Cập nhật trạng thái'),
         if (task.permissions.canChangeStatus)

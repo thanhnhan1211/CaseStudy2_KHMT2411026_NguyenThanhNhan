@@ -4,11 +4,13 @@ class TaskPermissions {
   final bool canEdit;
   final bool canChangeStatus;
   final bool canDelete;
+  final bool canManage; // giao việc + quản lý chia sẻ
 
   const TaskPermissions({
     this.canEdit = false,
     this.canChangeStatus = false,
     this.canDelete = false,
+    this.canManage = false,
   });
 
   factory TaskPermissions.fromJson(dynamic json) {
@@ -17,6 +19,7 @@ class TaskPermissions {
       canEdit: json['canEdit'] == true,
       canChangeStatus: json['canChangeStatus'] == true,
       canDelete: json['canDelete'] == true,
+      canManage: json['canManage'] == true,
     );
   }
 }
