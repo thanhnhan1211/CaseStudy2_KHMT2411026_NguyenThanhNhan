@@ -10,6 +10,7 @@ import '../../widgets/priority_badge.dart';
 import '../../widgets/status_badge.dart';
 import '../assignment/assign_task_screen.dart';
 import '../sharing/task_sharing_screen.dart';
+import 'email_log_screen.dart';
 import 'task_edit_screen.dart';
 
 class TaskDetailScreen extends StatefulWidget {
@@ -113,6 +114,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     // Chia sẻ có thể làm đổi quyền của chính mình, nên luôn tải lại
     _changed = true;
     await _load();
+  }
+
+  Future<void> _openEmailLogs() async {
+    final task = _task;
+    if (task == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => EmailLogScreen(task: task)),
+    );
   }
 
   Future<void> _delete() async {
@@ -259,6 +268,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     : 'Người được chia sẻ',
               ),
             ),
+            if (task.permissions.canManage)
+              OutlinedButton.icon(
+                onPressed: _openEmailLogs,
+                icon: const Icon(Icons.mark_email_read_outlined),
+                label: const Text('Lịch sử email'),
+              ),
           ],
         ),
         const SizedBox(height: 20),

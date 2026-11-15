@@ -8,6 +8,8 @@ import '../../services/task_service.dart';
 import '../../utils/session.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/task_card.dart';
+import '../../services/notification_service.dart';
+import '../notifications/notification_screen.dart';
 import '../profile/profile_screen.dart';
 import 'task_create_screen.dart';
 import 'task_detail_screen.dart';
@@ -47,14 +49,25 @@ class _TaskListScreenState extends State<TaskListScreen> {
   String? _priority;
   String _sortBy = 'createdAt';
 
+  final _notificationService = NotificationService();
+  Timer? _unreadTimer;
+  int _unreadCount = 0;
+
   @override
   void initState() {
     super.initState();
     _load();
+    _loadUnread();
+    // Cập nhật số thông báo chưa đọc mỗi 30 giây
+    _unreadTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _loadUnread(),
+    );
   }
 
   @override
   void dispose() {
+    _unreadTimer?.cancel();
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -179,6 +192,25 @@ class _TaskListScreenState extends State<TaskListScreen> {
     }
   }
 
+  Future<void> _loadUnread() async {
+    try {
+      final count = await _notificationService.getUnreadCount();
+      if (!mounted) return;
+      setState(() => _unreadCount = count);
+    } catch (_) {
+      // lỗi mạng: giữ số cũ
+    }
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotificationScreen()),
+    );
+    if (!mounted) return;
+    _loadUnread();
+    _load(showSpinner: false);
+  }
+
   Future<void> _openDetail(Task task) async {
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => TaskDetailScreen(taskId: task.id)),
@@ -201,6 +233,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(
         title: const Text('Công việc'),
         actions: [
+          IconButton(
+            tooltip: 'Thông báo',
+            onPressed: _openNotifications,
+            icon: Badge(
+              isLabelVisible: _unreadCount > 0,
+              label: Text(_unreadCount > 99 ? '99+' : '$_unreadCount'),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sắp xếp',
