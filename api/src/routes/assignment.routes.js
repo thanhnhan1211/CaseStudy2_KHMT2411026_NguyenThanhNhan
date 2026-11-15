@@ -7,6 +7,7 @@ const { isObjectId } = require('../validators/task.validator');
 const { validateTargets, MAX_TARGETS } = require('../validators/share.validator');
 const { resolveTargets } = require('../services/user.service');
 const { idOf, populateTask, logActivity } = require('../services/task.service');
+const { notifyAssigned } = require('../services/notification.service');
 
 // Gắn vào /api/tasks/:id/assignees
 const router = express.Router({ mergeParams: true });
@@ -86,6 +87,7 @@ router.post('/', requireManage, async (req, res) => {
         await logActivity(task._id, req.user._id, 'assigned', {
           users: added.map((u) => ({ id: u._id, fullName: u.fullName })),
         });
+        await notifyAssigned(task, req.user, added);
       }
       if (primaryChanged) {
         await logActivity(task._id, req.user._id, 'primary_changed', {

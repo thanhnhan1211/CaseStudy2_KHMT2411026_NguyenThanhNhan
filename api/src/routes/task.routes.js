@@ -18,6 +18,10 @@ const {
   logActivity,
   deleteTaskCascade,
 } = require('../services/task.service');
+const {
+  notifyDueDateChange,
+  notifyStatusChange,
+} = require('../services/notification.service');
 
 const router = express.Router();
 
@@ -122,6 +126,18 @@ router.put('/:id', async (req, res) => {
     if (Object.keys(changes).length > 0) {
       await task.save();
       await logActivity(task._id, req.user._id, 'updated', { changes });
+
+      if (changes.dueDate) {
+        await notifyDueDateChange(
+          task,
+          req.user,
+          changes.dueDate.from,
+          changes.dueDate.to
+        );
+      }
+      if (changes.status) {
+        await notifyStatusChange(task, req.user, changes.status.from, changes.status.to);
+      }
     }
 
     await populateTask(task);
@@ -155,6 +171,7 @@ router.patch('/:id/status', async (req, res) => {
         from,
         to: task.status,
       });
+      await notifyStatusChange(task, req.user, from, task.status);
     }
 
     await populateTask(task);

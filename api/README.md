@@ -13,6 +13,8 @@ npm start
 
 Tạo công việc mẫu cho một tài khoản đã đăng ký: `npm run seed -- email@cua-ban.com`
 
+Gửi thử một email để kiểm tra cấu hình SMTP: `npm run test-email -- email-nhan@example.com`
+
 ## Endpoint
 
 | Method | URL | Auth | Mô tả |
@@ -40,6 +42,12 @@ Tạo công việc mẫu cho một tài khoản đã đăng ký: `npm run seed -
 | POST | /api/tasks/:id/shares | Bearer | Chia sẻ: `userIds` và/hoặc `emails`, `permission` = viewer/editor (chỉ người tạo) |
 | PATCH | /api/tasks/:id/shares/:shareId | Bearer | Đổi quyền: `{ permission }` (chỉ người tạo) |
 | DELETE | /api/tasks/:id/shares/:shareId | Bearer | Thu hồi quyền (chỉ người tạo) |
+| GET | /api/notifications | Bearer | Danh sách thông báo của tôi (`unread=true`, `page`, `limit`) |
+| GET | /api/notifications/unread-count | Bearer | Số thông báo chưa đọc |
+| PATCH | /api/notifications/:id/read | Bearer | Đánh dấu một thông báo đã đọc |
+| PATCH | /api/notifications/read-all | Bearer | Đánh dấu tất cả đã đọc |
+| GET | /api/tasks/:id/email-logs | Bearer | Lịch sử gửi email của công việc (chỉ người tạo) |
+| POST | /api/email-logs/:id/retry | Bearer | Thử gửi lại email thất bại, tối đa 3 lần (chỉ người tạo) |
 
 ### Tham số của GET /api/tasks
 
@@ -69,3 +77,41 @@ Người không liên quan nhận `404` (không tiết lộ công việc có t�
 
 API cần đăng nhập gửi header `Authorization: Bearer <token>`.
 Android Emulator gọi API qua `http://10.0.2.2:3000/api`.
+
+## Thông báo và email
+
+| Sự kiện | Thông báo trong app | Email | Người nhận |
+| --- | --- | --- | --- |
+| Giao việc mới | có | có | người được giao |
+| Chia sẻ công việc | có | có | người được chia sẻ |
+| Đổi quyền chia sẻ | có | không | người bị đổi quyền |
+| Đổi hạn hoàn thành | có | có | người tạo, người được giao, người được chia sẻ |
+| Đổi trạng thái | có | không | như trên |
+| Hoàn thành công việc | có | có | như trên |
+| Sắp đến hạn (nhắc việc) | có | có | người được giao (không có thì người tạo) |
+
+Người thực hiện thao tác không nhận thông báo của chính mình.
+
+Email được gửi **ở nền** từ backend, mỗi email có một bản ghi trong `email_logs`
+(`pending` → `sent` hoặc `failed`, kèm số lần thử và lỗi). Email thất bại được thử gửi lại
+qua `POST /api/email-logs/:id/retry` (tối đa 3 lần, mỗi bản ghi chỉ có một lần gửi tại một thời điểm).
+Nếu chưa cấu hình SMTP, ứng dụng vẫn chạy: thông báo trong app vẫn có, email được ghi nhận `failed`.
+
+### Cấu hình SMTP (file `.env`)
+
+Ví dụ với Gmail: bật xác minh 2 bước, tạo **Mật khẩu ứng dụng** (App Password) và dùng nó làm `SMTP_PASS`.
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=ban@gmail.com
+SMTP_PASS=mat_khau_ung_dung
+MAIL_FROM=Task Manager <ban@gmail.com>
+```
+
+### Nhắc việc
+
+Tác vụ nền chạy mỗi `REMINDER_INTERVAL_MINUTES` phút (mặc định 60) và nhắc các việc chưa hoàn thành
+sẽ đến hạn trong `REMINDER_HOURS` giờ tới (mặc định 24). Mỗi hạn chỉ nhắc một lần; đổi hạn mới thì được nhắc lại.
+Đặt `REMINDER_ENABLED=false` để tắt.

@@ -18,18 +18,25 @@ const userRoutes = require('./routes/user.routes');
 const taskRoutes = require('./routes/task.routes');
 const assignmentRoutes = require('./routes/assignment.routes');
 const taskShareRoutes = require('./routes/taskShare.routes');
+const notificationRoutes = require('./routes/notification.routes');
+const { taskEmailLogRoutes, emailLogRoutes } = require('./routes/emailLog.routes');
+const { startReminderJob } = require('./jobs/reminder.job');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 // Các route con của công việc phải đặt trước /api/tasks
 app.use('/api/tasks/:id/assignees', assignmentRoutes);
 app.use('/api/tasks/:id/shares', taskShareRoutes);
+app.use('/api/tasks/:id/email-logs', taskEmailLogRoutes);
+app.use('/api/email-logs', emailLogRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/tasks', taskRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('MongoDB connected');
+    startReminderJob();
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error);

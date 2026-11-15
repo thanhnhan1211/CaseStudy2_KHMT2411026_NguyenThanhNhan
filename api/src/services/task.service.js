@@ -1,6 +1,8 @@
 const Task = require('../models/task.model');
 const TaskShare = require('../models/taskShare.model');
 const TaskActivity = require('../models/taskActivity.model');
+const Notification = require('../models/notification.model');
+const EmailLog = require('../models/emailLog.model');
 const { isObjectId } = require('../validators/task.validator');
 
 const USER_FIELDS = 'fullName email avatarUrl';
@@ -46,6 +48,7 @@ function computeAccess(task, userId, sharePermission) {
 function serializeTask(task, access) {
   const obj = task.toObject ? task.toObject() : { ...task };
   delete obj.__v;
+  delete obj.reminderSentFor;
   return { ...obj, myRole: access.myRole, permissions: access.permissions };
 }
 
@@ -147,6 +150,8 @@ async function logActivity(taskId, userId, action, details = {}) {
 async function deleteTaskCascade(task) {
   await TaskShare.deleteMany({ taskId: task._id });
   await TaskActivity.deleteMany({ taskId: task._id });
+  await Notification.deleteMany({ taskId: task._id });
+  await EmailLog.deleteMany({ taskId: task._id });
   await Task.deleteOne({ _id: task._id });
 }
 

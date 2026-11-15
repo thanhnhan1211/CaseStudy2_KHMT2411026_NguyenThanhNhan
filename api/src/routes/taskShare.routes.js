@@ -7,6 +7,10 @@ const { isObjectId } = require('../validators/task.validator');
 const { validateTargets, validatePermission } = require('../validators/share.validator');
 const { resolveTargets } = require('../services/user.service');
 const { USER_FIELDS, logActivity } = require('../services/task.service');
+const {
+  notifyShared,
+  notifyShareUpdated,
+} = require('../services/notification.service');
 
 // Gắn vào /api/tasks/:id/shares
 const router = express.Router({ mergeParams: true });
@@ -74,6 +78,8 @@ router.post('/', requireManage, async (req, res) => {
     const existingMap = new Map(existing.map((s) => [String(s.userId), s]));
 
     let createdCount = 0;
+    const createdUsers = [];
+    const updatedUsers = [];
     for (const user of resolved.users) {
       const share = existingMap.get(String(user._id));
 
@@ -86,6 +92,7 @@ router.post('/', requireManage, async (req, res) => {
             sharedBy: req.user._id,
           });
           createdCount += 1;
+          createdUsers.push(user);
           await logActivity(task._id, req.user._id, 'shared', {
             user: { id: user._id, fullName: user.fullName },
             permission: req.body.permission,
@@ -102,7 +109,20 @@ router.post('/', requireManage, async (req, res) => {
           from,
           to: share.permission,
         });
+        updatedUsers.push(user);
       }
+    }
+
+    if (createdUsers.length > 0) {
+      await notifyShared(task, req.user, createdUsers, req.body.permission);
+    }
+    if (updatedUsers.length > 0) {
+      await notifyShareUpdated(
+        task,
+        req.user,
+        updatedUsers.map((u) => u._id),
+        req.body.permission
+      );
     }
 
     res
@@ -131,6 +151,7 @@ router.patch('/:shareId', requireManage, async (req, res) => {
         from,
         to: share.permission,
       });
+      await notifyShareUpdated(req.task, req.user, [share.userId], share.permission);
     }
 
     res.status(200).json({ shares: await shareList(req.task._id) });

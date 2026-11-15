@@ -31,6 +31,9 @@ const taskSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Hạn đã được nhắc việc (để mỗi hạn chỉ nhắc một lần)
+    reminderSentFor: { type: Date, default: null },
+
     startDate: { type: Date, default: null },
     dueDate: { type: Date, default: null },
 
