@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
 import '../../utils/validators.dart';
+import '../../widgets/statistics_section.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -206,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cá nhân')),
+      appBar: AppBar(title: const Text('Cá nhân và thống kê')),
       body: _buildBody(),
     );
   }
@@ -248,6 +249,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         const SizedBox(height: 24),
+        const StatisticsSection(),
+        const SizedBox(height: 12),
+        const Divider(),
+        const SizedBox(height: 12),
         TextField(
           controller: _nameController,
           decoration: const InputDecoration(
