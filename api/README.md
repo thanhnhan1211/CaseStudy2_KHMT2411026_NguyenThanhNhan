@@ -48,6 +48,9 @@ Gửi thử một email để kiểm tra cấu hình SMTP: `npm run test-email -
 | PATCH | /api/notifications/read-all | Bearer | Đánh dấu tất cả đã đọc |
 | GET | /api/tasks/:id/email-logs | Bearer | Lịch sử gửi email của công việc (chỉ người tạo) |
 | POST | /api/email-logs/:id/retry | Bearer | Thử gửi lại email thất bại, tối đa 3 lần (chỉ người tạo) |
+| GET | /api/statistics/tasks | Bearer | Thống kê theo trạng thái và mức độ ưu tiên, tỷ lệ hoàn thành (`scope`) |
+| GET | /api/statistics/assignments | Bearer | Việc được giao cho tôi, tôi phụ trách chính, tôi đã giao cho người khác |
+| GET | /api/statistics/deadlines | Bearer | Việc sắp đến hạn và quá hạn (`days` từ 1 đến 90, mặc định 7; `scope`) |
 
 ### Tham số của GET /api/tasks
 
@@ -115,3 +118,12 @@ MAIL_FROM=Task Manager <ban@gmail.com>
 Tác vụ nền chạy mỗi `REMINDER_INTERVAL_MINUTES` phút (mặc định 60) và nhắc các việc chưa hoàn thành
 sẽ đến hạn trong `REMINDER_HOURS` giờ tới (mặc định 24). Mỗi hạn chỉ nhắc một lần; đổi hạn mới thì được nhắc lại.
 Đặt `REMINDER_ENABLED=false` để tắt.
+
+## Thống kê
+
+- Chỉ tính các công việc người dùng được truy cập (tự tạo, được giao, được chia sẻ); `scope` thu hẹp phạm vi
+  (`all`, `created`, `assigned`, `shared`). Người dùng không bao giờ thấy số liệu của công việc người khác.
+- **Quá hạn**: chưa hoàn thành và hạn đã qua. **Sắp đến hạn**: chưa hoàn thành và hạn nằm trong `days` ngày tới.
+  Việc đã hoàn thành không bao giờ được tính là quá hạn.
+- Mỗi danh sách hạn trả tối đa 20 việc (xếp theo hạn tăng dần) nhưng `count` luôn là tổng số thật.
+- Tỷ lệ hoàn thành = số việc hoàn thành / tổng số việc (0 nếu chưa có việc nào).

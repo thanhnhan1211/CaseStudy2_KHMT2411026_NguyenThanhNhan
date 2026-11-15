@@ -104,7 +104,9 @@ function sortTasks(tasks, sortBy = 'createdAt', order) {
   });
 }
 
-async function listTasks(userId, query) {
+// Bộ lọc các công việc người dùng được truy cập theo phạm vi:
+// all (mặc định) | created | assigned | shared
+async function buildScopeFilter(userId, scope) {
   const shares = await TaskShare.find({ userId })
     .select('taskId permission')
     .lean();
@@ -115,7 +117,13 @@ async function listTasks(userId, query) {
     assigned: { assigneeIds: userId },
     shared: { _id: { $in: shares.map((s) => s.taskId) } },
   };
-  const scopeFilter = scopes[query.scope] || { $or: Object.values(scopes) };
+  const scopeFilter = scopes[scope] || { $or: Object.values(scopes) };
+
+  return { scopeFilter, shareMap };
+}
+
+async function listTasks(userId, query) {
+  const { scopeFilter, shareMap } = await buildScopeFilter(userId, query.scope);
 
   const and = [scopeFilter];
   if (query.status) and.push({ status: query.status });
@@ -163,6 +171,7 @@ module.exports = {
   serializeTask,
   populateTask,
   findAccessibleTask,
+  buildScopeFilter,
   listTasks,
   sortTasks,
   logActivity,

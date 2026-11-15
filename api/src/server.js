@@ -19,6 +19,7 @@ const taskRoutes = require('./routes/task.routes');
 const assignmentRoutes = require('./routes/assignment.routes');
 const taskShareRoutes = require('./routes/taskShare.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const statisticsRoutes = require('./routes/statistics.routes');
 const { taskEmailLogRoutes, emailLogRoutes } = require('./routes/emailLog.routes');
 const { startReminderJob } = require('./jobs/reminder.job');
 
@@ -30,6 +31,7 @@ app.use('/api/tasks/:id/shares', taskShareRoutes);
 app.use('/api/tasks/:id/email-logs', taskEmailLogRoutes);
 app.use('/api/email-logs', emailLogRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/statistics', statisticsRoutes);
 app.use('/api/tasks', taskRoutes);
 
 mongoose
